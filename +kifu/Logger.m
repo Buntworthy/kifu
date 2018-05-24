@@ -6,6 +6,9 @@ classdef Logger < handle
         Filename
         Path
         FullPath
+        UseGit
+        Note = ''
+        Branched = false
     end
     
     properties (Constant)
@@ -25,13 +28,23 @@ classdef Logger < handle
     end
     
     methods
-        function obj = Logger(project, tag)
+        function obj = Logger(project, tag, useGit)
             obj.Project = project;
             obj.Tag = tag;
+            obj.UseGit = useGit;
+            if obj.UseGit
+                obj.createBranch();
+            end
             obj.Filename = obj.makeFilename(tag);
             obj.Path = obj.makePath(project);
             obj.FullPath = fullfile(obj.Path, obj.Filename);
             obj.initialiseFile();
+        end
+        
+        function delete(obj)
+            if obj.Branched
+                [a, b] = system('git checkout master');
+            end
         end
         
         function initialiseFile(obj)
@@ -71,17 +84,33 @@ classdef Logger < handle
                 end
             end
         end
+    
+        function filename = makeFilename(obj, tag)
+            now = datetime('now');
+            dateString = datestr(now, 'yyyymmdd_HHMMSS');
+            filename = sprintf('%s_%s', dateString, tag);
+            if obj.UseGit
+                filename = kifu.Logger.addGitHash(filename);
+            end
+            filename = [filename, '.csv'];
+        end
+        
+        function createBranch(obj)
+            assert(~kifu.untrackedFiles, ...
+                    'kifu:UntrackedFiles', ...
+                    'There are untracked files in the git repo.');
+            
+            if isempty(status) % up to date
+                % Don't do anything?
+            else
+                kifu.branch(obj.Tag, obj.Note);
+                obj.Branched = true;
+            end
+        end
         
     end
     
     methods (Static)
-        function filename = makeFilename(tag)
-            now = datetime('now');
-            dateString = datestr(now, 'yyyymmdd_HHMMSS');
-            filename = sprintf('%s_%s', dateString, tag);
-            filename = kifu.Logger.addGitHash(filename);
-            filename = [filename, '.csv'];
-        end
         
         function folderPath = makePath(project)
             folderPath = fullfile(kifu.Logger.Root, project);
