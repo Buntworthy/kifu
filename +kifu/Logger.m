@@ -43,6 +43,7 @@ classdef Logger < handle
         
         function delete(obj)
             if obj.Branched
+                % TODO check status
                 [a, b] = system('git checkout master');
             end
         end
