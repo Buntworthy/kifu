@@ -41,6 +41,32 @@ classdef GitTest < matlab.unittest.TestCase
             
             testCase.verifyError(branchAgain, 'kifu:branchExists');
         end
+        
+        function testUptoDate(testCase)
+            import matlab.unittest.fixtures.WorkingFolderFixture;
+            testCase.applyFixture(WorkingFolderFixture);
+            system('git init');
+            dlmwrite('0.txt', rand(10));
+            system('git add .');
+            system('git commit -m "message"');
+            
+            testCase.verifyTrue(kifu.gitUpToDate());
+        end
+        
+        function testNotUptoDate(testCase)
+            import matlab.unittest.fixtures.WorkingFolderFixture;
+            testCase.applyFixture(WorkingFolderFixture);
+            system('git init');
+            dlmwrite('0.txt', rand(10));
+            system('git add .');
+            system('git commit -m "message"');
+            dlmwrite('1.txt', rand(10));
+            
+            testCase.verifyFalse(kifu.gitUpToDate());
+            
+            system('git add .');
+            testCase.verifyFalse(kifu.gitUpToDate());
+        end
     end
     
 end

@@ -28,10 +28,12 @@ classdef Logger < handle
     end
     
     methods
-        function obj = Logger(project, tag, useGit)
+        function obj = Logger(project, tag, useGit, note)
             obj.Project = project;
             obj.Tag = tag;
             obj.UseGit = useGit;
+            obj.Note = note;
+            % TODO wait until fully configured
             if obj.UseGit
                 obj.createBranch();
             end
@@ -101,7 +103,7 @@ classdef Logger < handle
                     'kifu:UntrackedFiles', ...
                     'There are untracked files in the git repo.');
             
-            if isempty(status) % up to date
+            if kifu.gitUpToDate() % up to date
                 % Don't do anything?
             else
                 kifu.branch(obj.Tag, obj.Note);
