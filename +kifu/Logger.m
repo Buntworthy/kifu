@@ -8,7 +8,6 @@ classdef Logger < handle
         FullPath
         UseGit
         Note = ''
-        Branched = false
     end
     
     properties (Constant)
@@ -35,19 +34,12 @@ classdef Logger < handle
             obj.Note = note;
             % TODO wait until fully configured
             if obj.UseGit
-                obj.createBranch();
+                obj.makeCommit();
             end
             obj.Filename = obj.makeFilename(tag);
             obj.Path = obj.makePath(project);
             obj.FullPath = fullfile(obj.Path, obj.Filename);
             obj.initialiseFile();
-        end
-        
-        function delete(obj)
-            if obj.Branched
-                % TODO check status
-                [a, b] = system('git checkout master');
-            end
         end
         
         function initialiseFile(obj)
@@ -98,7 +90,7 @@ classdef Logger < handle
             filename = [filename, '.csv'];
         end
         
-        function createBranch(obj)
+        function makeCommit(obj)
             assert(~kifu.untrackedFiles, ...
                     'kifu:UntrackedFiles', ...
                     'There are untracked files in the git repo.');
@@ -106,8 +98,7 @@ classdef Logger < handle
             if kifu.gitUpToDate() % up to date
                 % Don't do anything?
             else
-                kifu.branch(obj.Tag, obj.Note);
-                obj.Branched = true;
+                kifu.commit(obj.Note);
             end
         end
         
@@ -120,6 +111,7 @@ classdef Logger < handle
         end
         
         function newName = addGitHash(oldName)
+            % TODO abstract
             [code, hash] = system('git rev-parse --short HEAD');
             if code ~= 0 % not a git repo
                 newName = oldName;
